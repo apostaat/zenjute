@@ -1,0 +1,10 @@
+{ns mapping
+
+ NaiveMapping
+ {:zen/tag #{naive-mapping}
+  :zj/body "(fn [{:keys [value]}]
+             {:identifier value
+              :identifier_type
+              (if-let [code (and value (-> value :type :coding first :code))]
+                code
+                (and value \"UPIN\"))})"}}
