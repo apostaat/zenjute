@@ -9,7 +9,14 @@
 (def paths {:paths ["test/zenjute/resources"]})
 (def ctx (zen/new-context paths {:unsafe true}))
 
-(zen/load-ns ctx 'mapping-two)
+(zen/get-tag ctx 'mapping-two/naive-mapping-two)
+
+(->> (zen/get-symbol ctx 'mapping-two/NaiveMappingTwo)
+     :zj/body)
+
+@ctx
+
+(zen/read-ns ctx 'mapping-two)
 
 (zen/load-ns ctx {'ns 'mapping
                   'naive-mapping {:zen/tags #{'zen/tag}}
