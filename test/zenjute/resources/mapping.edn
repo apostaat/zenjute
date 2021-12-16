@@ -1,10 +1,7 @@
-{ns mapping
+{ns mapping-two
+ naive-mapping-two {:zen/tags #{zen/tag}}
 
- NaiveMapping
- {:zen/tag #{naive-mapping}
-  :zj/body "(fn [{:keys [value]}]
-             {:identifier value
-              :identifier_type
-              (if-let [code (and value (-> value :type :coding first :code))]
-                code
-                (and value \"UPIN\"))})"}}
+ NaiveMappingTwo
+
+ {:zen/tags #{naive-mapping-two}
+  :body :boo}}
