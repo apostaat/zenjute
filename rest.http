@@ -1,7 +1,7 @@
 POST http://localhost:9999/$eval-mapping
 Content-type: text/plain 
 
-"{:data \"some\"}"
+"{:code "fbar"}$$$${:data "some"}"
 ######
 GET http://localhost:9999/mapping-demo
 Content-type: text/plain 

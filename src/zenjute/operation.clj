@@ -8,7 +8,7 @@
   (cond-> body (not (string? body)) slurp))
 
 (defn read-custom [body]
-  (let [[code data] (str/split body #"$$$$")]
+  (let [[code data] (str/split body #"\$\$\$\$")]
     {:code code
      :data data}))
 
@@ -25,6 +25,7 @@
   (try
     (if body
       (let [{:keys [data code] :as body*} (read-body req)
+            _ (println body*)
             data* (edn/read-string data)
             code* (edn/read-string code)]
         {:status 200
