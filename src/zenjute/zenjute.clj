@@ -59,7 +59,7 @@
 
 ;; zen/tags =>
 (defn recursive-search-by-tag
-  [ctx tags]
+  [v ctx tags]
   (swap! counter inc)
   (swap! a assoc (keyword (gensym "tags-")) {:tags tags
                                              :step @counter})
@@ -76,7 +76,7 @@
                   (do
                     (swap! a assoc (keyword (gensym "ifns-")) {:ifns ifns
                                                                :step @counter})
-                    (let [res (recursive-search-by-tag ctx ifns)
+                    (let [res (recursive-search-by-tag v ctx ifns)
                           body-fn (:body res)
                           _tag_ (first (:tag res))
                           _ (swap! counter dec)
@@ -95,22 +95,32 @@
                                   :body (expand _let_ body)}
                                  {:tag t
                                   :body body})]
+                      (vswap! v conj {t (:body body)})
                       body))
                   (do
                     (swap! a assoc (keyword (gensym "dead-zone-")) {:tags (:zen/tags import-schema)
                                                                     :step @counter})
                     (if-let [_let_ (:zj/let import-schema)]
-                     (expand _let_ (:zj/body import-schema))
-                     (:zj/body import-schema))))))
+                      (do (vswap! v conj {(first tags) (expand _let_ (:zj/body import-schema))})
+                          {:body (expand _let_ (:zj/body import-schema))
+                           :tag (:zen/tags import-schema)})
+                      (do (vswap! v conj {(first tags) (:zj/body import-schema)})
+                          {:body (:zj/body import-schema)
+                           :tag (:zen/tags import-schema)}))))))
             imports)
       (do
         (swap! a assoc (keyword (gensym "recursion-exit-")) {:tags tags
                                                              :step @counter})
         (if-let [_let_ (:zj/let schema)]
-          {:tag (:zen/tags schema)
-           :body (expand _let_ (:zj/body schema))}
-          {:tag (:zen/tags schema)
-           :body (:zj/body schema)})))))
+          (do
+            (vswap! v conj {(first (:zen/tags schema))
+                            (expand _let_ (:zj/body schema))})
+            {:tag (:zen/tags schema)
+           :body (expand _let_ (:zj/body schema))})
+          (do (vswap! v conj {(first (:zen/tags schema))
+                              (:zj/body schema)})
+            {:tag (:zen/tags schema)
+             :body (:zj/body schema)}))))))
 
 (defn make-tsar-fn
   [ctx {body :zj/body import-fn :zj/import-fn zen-tags :zen/tags :as proto-mapping}]
@@ -118,7 +128,9 @@
                                         ;until imported ns does not contain imported-fn
                                         ;this operation is done for each symbol in imported-fn vec
 
-  (recursive-search-by-tag ctx zen-tags))
+  (let [k (volatile! {})]
+    {:output (recursive-search-by-tag k ctx zen-tags)
+    :volatile @k}))
 
 (comment
 
@@ -167,8 +179,7 @@
       input {:k {:j {:l "WIN"}}}]
   #_(get-zen-symbol ctx 'mt/naive-three)
   #_(make-tsar-fn ctx (get-zen-symbol ctx 'three/naive-three))
-  (make-tsar-fn ctx (get-zen-symbol ctx 'four/naive-four))
-  )
+  (make-tsar-fn ctx (get-zen-symbol ctx 'four/naive-four)))
 
 @a
 
