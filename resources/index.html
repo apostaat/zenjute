@@ -8,8 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.48.4/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.48.4/mode/clojure/clojure.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.48.4/addon/lint/lint.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/gh/olimsaidov/js-yaml@cd30956/dist/js-yaml.js"></script>
-
     <style media="screen">
       article {
           display: flex;
@@ -157,22 +155,24 @@
 
           function sendCodeData (code) {
               let xhr = new XMLHttpRequest();
-              xhr.open('POST', 'http://localhost:9999/evalmapping', false);
+              xhr.open('POST', 'http://localhost:9999/$eval-mapping', false);
               xhr.setRequestHeader('Content-Type', 'text/plain');
               xhr.send(code,data);
-              if (xhr.status != 200) {
-                  xhr.responseText; }
-               else {
-                xhr.responseText;
+              return xhr.responseText;
               }
-          }
           
         function evalJute() {
           var code = codeEditor.getValue();
           var data = dataEditor.getValue();
           var result = null;
-          resultsEditor.setValue(code);
-          console.log(sendCodeData(code));  
+            var obj = new Object();
+            obj.code = code;
+            obj.data = data; 
+            var jsonString= JSON.stringify(obj);
+            console.log(jsonString);
+            
+          resultsEditor.setValue((sendCodeData(jsonString)));
+            
         }
      
         var cmOptions = {
