@@ -2,7 +2,8 @@
   (:require [clojure.test :refer :all]
             [zen.core :as zen]
             [sci.core :as sci]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.walk :as w]))
 
 ;(remove-ns 'zenjute.zenjute-test)
 
@@ -11,35 +12,178 @@
 
 (zen/get-tag ctx 'mapping-two/naive-mapping-two)
 
-(->> (zen/get-symbol ctx 'mapping-two/NaiveMappingTwo)
-     :zj/body)
-
-@ctx
+(defn sanitize-body [body]
+  (w/postwalk (fn [el] (if (symbol? el)
+                         (if (or (= "fn" (name el))
+                                 (= "->" (name el))
+                                 (= "->>" (name el)))
+                           (symbol (name el))
+                           (symbol (str (namespace el)
+                                        "-" (name el))))
+                         el)) body))
 
 (zen/read-ns ctx 'mapping-two)
 
-(zen/load-ns ctx {'ns 'mapping
-                  'naive-mapping {:zen/tags #{'zen/tag}}
+(defn get-zen-symbol [ctx tag]
+  (->> tag
+       (zen/get-tag ctx)
+       first
+       (zen/get-symbol ctx)))
 
-                  'NaiveMapping
 
-                  {:zen/tags #{'naive-mapping}
-                   :zj/body '(fn [v] {:id (-> v :k :j :l)})}})
+(defn expand-let
+  [_let_ body]
+  (w/postwalk (fn [el] (if-let [our-let (get _let_ el)]
+                           our-let
+                           el)) body))
+(expand-let
+ {'k (fn [x] {:id x})
+  'j :j}
+ '(fn [v] {:id (-> v k j :l)}))
 
-(->> (zen/get-symbol ctx 'mapping/NaiveMapping)
-     :zj/body)
 
-(->> (zen/get-tag ctx 'mapping/naive-mapping)
-     first
-     (zen/get-symbol ctx)
-     :zj/body)
+;
 
-@ctx
+(defmacro expand-symbol
+  [{bindings :zj/let body :zj/body :as proto-mapping}]
+  `(let* ~(destructure bindings)
+     (~@body)))
+
+(defmacro sci-expand-let
+  [{bindings :zj/let body :zj/body :as proto-mapping}]
+   (format "(let %s %s)" bindings body))
+
+(deftest subs-test
+  (testing "if our let works properly"
+    (is (= {:id 5}
+           ((expand-symbol {:zj/let [k :k
+                                        j :j]
+                            :zj/body (fn [v] {:id (-> v k j :l)})})
+            {:k {:j {:l 5}}})))))
+
+{:zj/import-fn ['our 'not-our]}
+
+(defn recursive-search-by-tag
+  [ctx x]
+  (->> x
+       (mapv (get-zen-symbol ctx))
+       (mapv (fn [y] (if-let [ifn (:zj/import-fn y)]
+                       ;(recursive-search-by-tag ctx ifn)
+                       (expand-symbol y))))))
+
+(deftest recursive-search-import
+  (testing "we create three 'nested' namespaces"
+    (let [_ (zen/load-ns ctx {'ns 'mapping
+                              'naive-mapping {:zen/tags #{'zen/tag}}
+
+                              'NaiveMapping
+
+                              {:zen/tags #{'naive-mapping}
+                               :zj/let {k :k}
+                               :zj/body '(fn [v] {:id (-> v k :j :l)})}})
+
+          _ (zen/load-ns ctx {'ns 'mtw
+                              'naive-mapping {:zen/tags #{'zen/tag}}
+
+                              'NaiveTwo
+
+                              {:zen/tags #{'naive-two}
+                               :zj/import-fn ['naive-mapping]
+                               :zj/let {k :k}
+                               :zj/body '(fn [v] {:id (-> v k :j :l)})}})
+
+          _ (zen/load-ns ctx {'ns 'mt
+                              'naive-three {:zen/tags #{'zen/tag}}
+
+                              'NaiveThree
+                              {:zen/tags #{naive-three}
+                               :zj/import-fn ['naive-two 'naive-mapping]
+                               :zj/let [foo (fn [x] (merge {:id x}
+                                                              {:k 5}))]
+                               :zj/body {:id foo
+                                         :boo foo}}})])))
+
+;(TODO)
+; we get first import
+; we get to the bottom import
+; when we reached the bottom
+; we expand bottom let and make namespaced-fn
+; then we go one level up and start expanding
+; current node:
+;; we substitute all instances of first import-fn symbol
+;; in let and body
+;; we substite all instances of second import-fn but beforehand we do the same
+;; reaching the bottom
+;; and we do it until we run out of import-fn
+;; and after that we expand current level let and pass it towards upper level
+;; of recursion
+
+(defn expand-import-fn
+  [{body :zj/body import-fn :zj/import-fn :as proto-mapping}]
+ ;check if imported ns also cotains imported-fn and import them
+ ;until imported ns does not contain imported-fn
+ ;this operation is done for each symbol in imported-fn vec
+
+  (recursive-search-by-tag import-fn))
+
+(defn create-tsar-fn [ctx zen-tag]
+  (let [proto-mapping (get-zen-symbol ctx zen-tag)
+        x (substitute-symbols proto-mapping)]))
+
+(deftest symbol-test
+  (testing "if symbol is substituted to namespace-fn"
+    (let [_ (zen/load-ns ctx {'ns 'mapping
+                              'naive-mapping {:zen/tags #{'zen/tag}}
+
+                              'NaiveMapping
+
+                              {:zen/tags #{'naive-mapping}
+                               :zj/let [k :k]
+                               :zj/body '(fn [v] {:id (-> v k :j :l)})}})
+
+          _ (zen/load-ns ctx {'ns 'mt
+                              'naive-three {:zen/tags #{'zen/tag}}
+
+                              'NaiveThree
+                              {:zen/tags #{naive-three}
+                               :zj/import-fn ['naive-mapping]
+                               :zj/let [foo (fn [x] (merge {:id x}
+                                                              {:k 5}))]
+                               :zj/body {:id foo
+                                         :boo foo}}})]
+      (= '(fn [d] {:id (fn [mt-x] (merge {:id mt-x}
+                                         {:k 5}))
+                   :boo (fn [mt-x] (merge {:id mt-x}
+                                          {:k 5}))})
+         (create-tsar-fn ctx 'naive-three)))))
+
+(defn apply-mapping [ctx tag data]
+  (let [our-fn (->> tag
+                    (zen/get-tag ctx)
+                    first
+                    (zen/get-symbol ctx)
+                    :zj/body
+                    sanitize-body
+                    str)
+        sci-fn (str "(" our-fn data ")")]
+    (sci/eval-string sci-fn)))
+
+(zen/get-tag ctx 'mapping-two/naive-mapping-two)
+
+(apply-mapping ctx 'mapping/naive-mapping {:k {:j {:l 5}}})
+
+;;; THOUGHTS
+;;; pseudonamespaced-fns (fn [x] -> fn [ns-x]) (done)
+;;; tsar-fn
+;;; zj/body
+;;; zj/path
+;;; import-fn
+;;; symbol
 
 ;TODOLIST:
-; - load schema from file
-; - load body as list of symbols
-; - evaluate body via sci and wrap around data as arg
+; - load schema from file DONE
+; - load body as list of non namespaced symbols DONE
+; - evaluate body via sci and wrap around data as arg DONE
 
 (deftest sci-test
   (testing "if args are not given - the default argument is all data"
@@ -50,25 +194,11 @@
 
 ;   or particular keys
 
-
-
 ; - make path function ^:path[:k1 :k2 :k3]
 ;   that works with arbitrary nestity
 
 (deftest path-test
   (is (= :boo (check-path {:transaction_date
                            {:from
-                            {:city ^zj/path[:currentDate]}}}
+                            {:city ^zj/path [:currentDate]}}}
                           {:currentData :boo}))))
-
-(fn [x] {:t {:f {:c (:cur x)}}})
-
-(get-in {:k {:j [1 2 3]}} [:k :j 0])
-
-;; (zen/get-symbol ctx 'mapping/NaiveMapping
-;; (zen/read-ns ctx 'mapping)
-;; (zen/load-ns ctx 'mapping)
-
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))

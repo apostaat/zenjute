@@ -1,7 +1,0 @@
-{ns mapping-two
- naive-mapping-two {:zen/tags #{zen/tag}}
-
- NaiveMappingTwo
-
- {:zen/tags #{naive-mapping-two}
-  :body :boo}}

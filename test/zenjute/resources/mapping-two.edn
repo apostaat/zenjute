@@ -4,4 +4,45 @@
  NaiveMappingTwo
 
  {:zen/tags #{naive-mapping-two}
-  :zj/body (fn [v] {:id (-> v :k :j :l)})}}
+  :zj/symbol {our-smbl (fn [x] {:x (inc x)})}
+  :zj/body (fn [d] (merge (our-smbl d)
+                          {:id 5}))}
+
+(let [our-smbl (fn [x] {:x (inc x)})]
+   (fn [d]
+      (map (fn [b] (merge {:d (dec b)}
+                          (our-smbl b)))) d))
+
+{:zen/tags #{boo}
+ :zen/import-fn [naive-mapping-two naive-mapping-one]
+ :zj/symbol [boo (fn [x] (identity x))
+             foo (fn [x] (qoo x))]
+ :id ^zj/path[:id]
+ :location ^zj/path[:location :id]
+ :name (fn [d] (map (fn [naive-mapping-two-d]
+                      (merge
+                       (fn [naive-mapping-two-x]
+                         {:x (inc naive-mapping-two-x)})
+                       {:id 5})) d))}
+
+validation-of-tag :: check if tag is unique?
+
+(TODO: validation-of-data :: think how we validate in-out data)
+
+import-fn :: [recursively invokes zj/body for each
+               zj/symbol by tag with namespaced
+              argument name for each symbol]
+ symbol :: [works as let, local scope of visibility]
+ create-path :: [vec-of-path] -> (fn [ns-x] get-in ns-x [vec-of-path])
+ create-tsar-fn :: (fn [d] {:map_with_symbols_substituted_to_lambdas d})
+ apply-mapping :: ([ctx] [zen-mapping] [data]) ->
+                  ([tsar-fn] [data])
+                  -> [mapped-data]
+
+ (let [boo (fn [x] (identity x))
+      foo (fn [x] (naive-mapping x))]
+    (fn [d] {:id (fn [naive-mapping-two-x] (get-in d [:id]))
+             :location (fn [naive-mapping-two-x]
+                         (get-in d [:location :id]))
+             :name (fn [naive-mapping-two-x]
+                     (map (comp boo naive-mapping :x) d))}))
