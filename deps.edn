@@ -1,6 +1,14 @@
 {:paths ["src" "resources"]
  :deps {org.clojure/clojure {:mvn/version "1.10.3"}
-        org.babashka/sci {:mvn/version "0.2.8"}
+        org.babashka/sci    {:mvn/version "0.2.8"}
+        route-map           {:mvn/version "0.0.7-RC4"}
+        ring/ring-json      {:mvn/version "0.5.0"}
+        ring/ring-core      {:mvn/version "1.8.1"}
+        ring                {:mvn/version "1.7.1"}
+        ring/ring-defaults  {:mvn/version "0.3.2"}
+        ring-cors           {:mvn/version "0.1.13"}
+        http-kit            {:mvn/version "2.3.0"}
+        cheshire            {:mvn/version "5.9.0"}
         zen-lang/zen {:git/url "https://github.com/zen-lang/zen"
                       :sha "e9408617f55c71b859017de32d091a0080b286a6"}}
  :aliases
