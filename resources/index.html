@@ -155,15 +155,15 @@
         // var resultsEditor = null;
         var juteError = null;
 
-          function sendCodeData (code,data) {
+          function sendCodeData (code) {
               let xhr = new XMLHttpRequest();
-              xhr.open('POST', 'localhost:9999/evalmapping', false);
+              xhr.open('POST', 'http://localhost:9999/evalmapping', false);
               xhr.setRequestHeader('Content-Type', 'text/plain');
               xhr.send(code,data);
               if (xhr.status != 200) {
-                  alert("File not found!");
-              } else {
-                  alert(xhr.responseText);
+                  xhr.responseText; }
+               else {
+                xhr.responseText;
               }
           }
           
