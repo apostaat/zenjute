@@ -3,3 +3,5 @@ Content-type: text/plain
 
 "{:code \"some\"}"
 ######
+GET http://localhost:9999/mapping-demo
+Content-type: text/plain 

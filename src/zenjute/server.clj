@@ -8,7 +8,9 @@
             [zenjute.operation]))
 
 (def routes
-  {"$eval-mapping" {:POST zenjute.operation/eval-mapping}}) 
+  {"$eval-mapping" {:POST zenjute.operation/eval-mapping}
+   "mapping-demo"  {:GET zenjute.operation/mapping-demo-static}
+   })
 
 (defn params-to-keyword [params]
   (reduce-kv (fn [acc k v]
