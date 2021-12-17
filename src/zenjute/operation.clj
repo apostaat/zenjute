@@ -3,8 +3,11 @@
             [clojure.java.io :as io]
             [clojure.edn   :as edn]))
 
+(defn ->string [body]
+  (cond-> body (not (string? body)) slurp))
+
 (defn read-body [{:keys [body] :as req}]
-  (let [cnt body]
+  (let [cnt (->string body)]
     (if (#{"application/json"} (get-in req [:headers "content-type"]))
       (json/parse-string cnt true)
       (edn/read-string cnt))))

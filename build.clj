@@ -2,9 +2,8 @@
   (:refer-clojure :exclude [test])
   (:require [org.corfield.build :as bb]))
 
-(def lib 'net.clojars.myname/myapp)
 (def version "0.1.0-SNAPSHOT")
-(def main 'myname.myapp)
+(def main 'zenjute.zenjute)
 
 (defn test "Run the tests." [opts]
   (bb/run-tests opts))
