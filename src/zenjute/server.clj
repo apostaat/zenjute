@@ -5,8 +5,7 @@
             [ring.middleware.json   :refer [wrap-json-response wrap-json-body]]
             [org.httpkit.server :as server]
             [route-map.core  :as rm]
-            [zenjute.operation]
-            ))
+            [zenjute.operation]))
 
 (def routes
   {"$eval-mapping" {:POST zenjute.operation/eval-mapping}}) 
@@ -17,6 +16,7 @@
 
 (defn handler [{meth :request-method uri :uri :as req}]
   (if-let [res (rm/match [meth uri] routes)]
+
     ((:match res) (-> (assoc req :params (params-to-keyword (:params req)))
                       (update-in [:params] merge (:params res))))
     {:status 404 :body {:error "Not found"}}))

@@ -1,5 +1,5 @@
-POST http://localhost:9999/$eval-mapping 
+POST http://localhost:9999/$eval-mapping
 Content-type: text/plain 
 
-"govno"
+"{:code \"some\"}"
 ######
