@@ -149,34 +149,42 @@
                               'naive-mapping {:zen/tags #{'zen/tag}}
                               'NaiveMapping
                               {:zen/tags #{'naive-mapping}
-                               :zj/let {'k :k}
-                               :zj/body '(fn [v] {:id (-> v k :j :l)})}})
+                               :zj/let {'k :way}
+                               :zj/body '(fn [v] {:go (-> v k :over :there)})}})
       _ (zen/load-ns ctx {'ns 'two
                           'naive-two {:zen/tags #{'zen/tag}}
+
                           'NaiveTwo
                           {:zen/tags #{'naive-two}
                            :zj/import-fn #{'one/naive-mapping}
-                           :zj/body '(fn [v] {:key2 (one/naive-mapping v)})}})
+                           :zj/body '(fn [v] {:one (one/naive-mapping v)})}})
       _ (zen/load-ns ctx {'ns 'three
                           'naive-three {:zen/tags #{'zen/tag}}
+                          'naive-two {:zen/tags #{'zen/tag}}
+
+                          'NaiveTwo
+                          {:zen/tags #{'naive-two}
+                           :zj/import-fn #{'one/naive-mapping}
+                           :zj/body '(fn [v] {:one (one/naive-mapping v)})}
+
                           'NaiveThree
                           {:zen/tags #{'naive-three}
-                           :zj/import-fn #{'two/naive-two}
-                           :zj/let {'foo '(fn [x] (merge {:id (two/naive-two x)}
-                                                         {:k 5}))}
-                           :zj/body '(fn [v] {:foo (foo v)
-                                              :naive-mapping (two/naive-two v)})}})
+                           :zj/import-fn #{'three/naive-two}
+                           :zj/let {'foo '(fn [x] (merge {:two (three/naive-two x)}
+                                                         {:stuff "stuff"}))}
+                           :zj/body '(fn [v] {:three (foo v)
+                                              :one-more-time (three/naive-two v)})}})
       _ (zen/load-ns ctx {'ns 'four
                           'naive-four {:zen/tags #{'zen/tag}}
                           'NaiveFour
                           {:zen/tags #{'naive-four}
                            :zj/import-fn #{'three/naive-three}
                            :zj/let {'kal '(fn [x] (three/naive-three x))}
-                           :zj/body '(fn [v] {:kal (kal v)})}})
-      res (fn [v] {:kal {:foo {:id {:key2 {:id (-> v :k :j :l)}}
-                               :k 5}
-                         :naive-mapping {:id (-> v :k :j :l)}}})
-      input {:k {:j {:l "WIN"}}}]
+                           :zj/body '(fn [v] {:four (kal v)})}})
+      res {:four {:three {:two {:one {:go "WIN"}}
+                          :stuff "stuff"}
+                  :one-more-time {:one {:go "WIN"}}}}
+      input {:way {:over {:there "WIN"}}}]
   #_(get-zen-symbol ctx 'mt/naive-three)
   #_(make-tsar-fn ctx (get-zen-symbol ctx 'three/naive-three))
   (apply-mapping ctx input (get-in (make-tsar-fn ctx (get-zen-symbol ctx 'four/naive-four))
