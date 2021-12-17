@@ -4,7 +4,7 @@
             [clojure.edn   :as edn]))
 
 (defn read-body [{:keys [body] :as req}]
-  (let [cnt (slurp body)]
+  (let [cnt body]
     (if (#{"application/json"} (get-in req [:headers "content-type"]))
       (json/parse-string cnt true)
       (edn/read-string cnt))))
@@ -18,7 +18,6 @@
       (let [{:keys [data code] :as body*} (read-body req)
             data* (edn/read-string data)
             code* (edn/read-string code)]
-        (println (type body*))
         {:status 200
          :body data})
       {:status 400
@@ -31,5 +30,3 @@
   (let [static-page (-> "index.html" io/resource slurp)]
     {:status 200
      :body static-page}))
-
-(type (edn/read-string "{:data some}"))
