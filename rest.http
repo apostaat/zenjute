@@ -1,7 +1,12 @@
 POST http://localhost:9999/$eval-mapping
 Content-type: text/plain 
 
-"{:code \"some\"}"
+"{:data \"some\"}"
 ######
 GET http://localhost:9999/mapping-demo
 Content-type: text/plain 
+######
+POST http://localhost:9999/$eval-mapping
+Content-type: application/json 
+
+"{\"data\": \"{:code 1}\"}"
