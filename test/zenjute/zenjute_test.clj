@@ -42,28 +42,21 @@
  '(fn [v] {:id (-> v k j :l)}))
 
 
-;
+(defn recursive-search-import
+  [ctx {ifns :zj/import-fn}]
+  (->> ifns
+       (mapv (partial get-zen-symbol ctx))
+       (mapv (fn [y] (if-let [ifn (:zj/import-fn y)]
+                       (recursive-search-import ctx ifn)
+                       y)))))
 
-(defmacro expand-symbol
-  [{bindings :zj/let body :zj/body :as proto-mapping}]
-  `(let* ~(destructure bindings)
-     (~@body)))
+(->> (get-zen-symbol ctx 'mt/naive-three)
+     (recursive-search-import ctx))
 
-(defmacro sci-expand-let
-  [{bindings :zj/let body :zj/body :as proto-mapping}]
-   (format "(let %s %s)" bindings body))
 
-(deftest subs-test
-  (testing "if our let works properly"
-    (is (= {:id 5}
-           ((expand-symbol {:zj/let [k :k
-                                        j :j]
-                            :zj/body (fn [v] {:id (-> v k j :l)})})
-            {:k {:j {:l 5}}})))))
+;; TODO sanitize remove quote
 
-{:zj/import-fn ['our 'not-our]}
-
-(defn recursive-search-by-tag
+#_(defn recursive-search-by-tag
   [ctx x]
   (->> x
        (mapv (get-zen-symbol ctx))
@@ -71,7 +64,7 @@
                        ;(recursive-search-by-tag ctx ifn)
                        (expand-symbol y))))))
 
-(deftest recursive-search-import
+(deftest recursive-search-import-test
   (testing "we create three 'nested' namespaces"
     (let [_ (zen/load-ns ctx {'ns 'mapping
                               'naive-mapping {:zen/tags #{'zen/tag}}
@@ -79,8 +72,8 @@
                               'NaiveMapping
 
                               {:zen/tags #{'naive-mapping}
-                               :zj/let {k :k}
-                               :zj/body '(fn [v] {:id (-> v k :j :l)})}})
+                               :zj/let {'k :k}
+                               :zj/body '(fn [v] {:id (-> v 'k :j :l)})}})
 
           _ (zen/load-ns ctx {'ns 'mtw
                               'naive-mapping {:zen/tags #{'zen/tag}}
@@ -88,20 +81,22 @@
                               'NaiveTwo
 
                               {:zen/tags #{'naive-two}
-                               :zj/import-fn ['naive-mapping]
-                               :zj/let {k :k}
-                               :zj/body '(fn [v] {:id (-> v k :j :l)})}})
+                               :zj/import-fn #{'mapping/naive-mapping}
+                               :zj/let {'k :k}
+                               :zj/body '(fn [v] {:id (-> v 'k :j :l)})}})
 
           _ (zen/load-ns ctx {'ns 'mt
                               'naive-three {:zen/tags #{'zen/tag}}
 
                               'NaiveThree
-                              {:zen/tags #{naive-three}
-                               :zj/import-fn ['naive-two 'naive-mapping]
-                               :zj/let [foo (fn [x] (merge {:id x}
-                                                              {:k 5}))]
-                               :zj/body {:id foo
-                                         :boo foo}}})])))
+                              {:zen/tags #{'naive-three}
+                               :zj/import-fn #{'mtw/naive-two
+                                               'mapping/naive-mapping}
+                               :zj/let {'foo '(fn [x] (merge {:id x}
+                                                              {:k 5}))}
+                               :zj/body {:id 'foo
+                                         :boo 'foo}}})]
+      (is (= 5 (recursive-search-import ctx (get-zen-symbol ctx 'mt/naive-three)))))))
 
 ;(TODO)
 ; we get first import
