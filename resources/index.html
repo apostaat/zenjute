@@ -151,13 +151,13 @@
         // var codeEditor = null;
         // var dataEditor = null;
         // var resultsEditor = null;
-        var juteError = null;
+        // var juteError = null;
 
-          function sendCodeData (code) {
+          function sendCodeData (c) {
               let xhr = new XMLHttpRequest();
               xhr.open('POST', 'http://localhost:9999/$eval-mapping', false);
               xhr.setRequestHeader('Content-Type', 'application/JSON');
-              xhr.send(code,data);
+              xhr.send(c);
               return xhr.responseText;
               }
           
@@ -165,21 +165,20 @@
           var code = codeEditor.getValue();
           var data = dataEditor.getValue();
           var result = null;
-            var obj = new Object();
-            obj.code = code;
-            obj.data = data; 
-            var jsonString= JSON.stringify(obj);
-            console.log(jsonString);
-            
-          resultsEditor.setValue((sendCodeData(jsonString)));
+            var d = [code, '$$$', data];
+            var dollarJute = d.join();
+                console.log(d, dollarJute);
+            resultsEditor.setValue((sendCodeData(dollarJute)));
             
         }
      
         var cmOptions = {
           lineNumbers: true,
+          matchBrackets: true,  
           mode: "text/x-clojure",
           gutters: ["CodeMirror-lint-markers"],
-          changes: evalJute
+          changes: evalJute,
+          pollInterval: 350 
         };
 
         codeEditor = CodeMirror.fromTextArea(document.getElementById("code"), cmOptions);

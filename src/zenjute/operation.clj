@@ -8,7 +8,7 @@
   (cond-> body (not (string? body)) slurp))
 
 (defn read-custom [body]
-  (let [[code data] (str/split body #"\$\$\$\$")]
+  (let [[code data] (str/split body #"\$\$\$\,")]
     {:code code
      :data data}))
 
