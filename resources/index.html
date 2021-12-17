@@ -156,7 +156,7 @@
           function sendCodeData (code) {
               let xhr = new XMLHttpRequest();
               xhr.open('POST', 'http://localhost:9999/$eval-mapping', false);
-              xhr.setRequestHeader('Content-Type', 'text/plain');
+              xhr.setRequestHeader('Content-Type', 'application/JSON');
               xhr.send(code,data);
               return xhr.responseText;
               }
