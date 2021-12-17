@@ -179,16 +179,16 @@
                           'NaiveFour
                           {:zen/tags #{'naive-four}
                            :zj/import-fn #{'three/naive-three}
-                           :zj/let {'kal '(fn [x] (three/naive-three x))}
-                           :zj/body '(fn [v] {:four (kal v)})}})
+                           :zj/let {'foo '(fn [x] (three/naive-three x))}
+                           :zj/body '(fn [v] {:four (foo v)})}})
       res {:four {:three {:two {:one {:go "WIN"}}
                           :stuff "stuff"}
                   :one-more-time {:one {:go "WIN"}}}}
       input {:way {:over {:there "WIN"}}}]
   #_(get-zen-symbol ctx 'mt/naive-three)
   #_(make-tsar-fn ctx (get-zen-symbol ctx 'three/naive-three))
-  (apply-mapping ctx input (get-in (make-tsar-fn ctx (get-zen-symbol ctx 'four/naive-four))
-                                   [:body]))
+  (get-in (make-tsar-fn ctx (get-zen-symbol ctx 'four/naive-four))
+          [:body])
   )
 
 @a
