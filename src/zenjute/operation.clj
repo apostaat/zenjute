@@ -1,16 +1,22 @@
 (ns zenjute.operation
   (:require [cheshire.core :as json]
             [clojure.java.io :as io]
-            [clojure.edn   :as edn]))
+            [clojure.edn   :as edn]
+            [clojure.string :as str]))
 
 (defn ->string [body]
   (cond-> body (not (string? body)) slurp))
+
+(defn read-custom [body]
+  (let [[code data] (str/split body #"$$$$")]
+    {:code code
+     :data data}))
 
 (defn read-body [{:keys [body] :as req}]
   (let [cnt (->string body)]
     (if (#{"application/json"} (get-in req [:headers "content-type"]))
       (json/parse-string cnt true)
-      (edn/read-string cnt))))
+      (read-custom cnt))))
 
 ;;TODO: eval mapping here.
 ;;NOTE: body is a string of text and it must be evaluated by reader
@@ -33,3 +39,4 @@
   (let [static-page (-> "index.html" io/resource slurp)]
     {:status 200
      :body static-page}))
+
