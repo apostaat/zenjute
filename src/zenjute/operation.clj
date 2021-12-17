@@ -1,5 +1,7 @@
 (ns zenjute.operation
   (:require [cheshire.core :as json]
+            [zenjute.zenjute :as zj]
+            [zen.core :as zen]
             [clojure.java.io :as io]
             [clojure.edn   :as edn]
             [clojure.string :as str]))
@@ -27,9 +29,12 @@
       (let [{:keys [data code] :as body*} (read-body req)
             _ (println body*)
             data* (edn/read-string data)
-            code* (edn/read-string code)]
+            code* (edn/read-string code)
+            ztx (zen/new-context {:unsafe true})
+            _ (zen/load-ns ztx code*)
+            res (zj/apply-mapping data* (:body (zj/make-tsar-fn ztx code*)))]
         {:status 200
-         :body data})
+         :body res})
       {:status 400
        :body (json/generate-string
               {:message "No body in the request"})})

@@ -1,4 +1,4 @@
-(ns myname.myapp
+(ns zenjute.zenjute
   (:require [zen.core :as zen]
             [sci.core :as sci]
             [clojure.walk :as w])
@@ -33,7 +33,7 @@
         sci-fn (str "(" our-fn data ")")]
     (sci/eval-string sci-fn)))
 
-(defn apply-mapping [ctx data tsar-fn]
+(defn apply-mapping [data tsar-fn]
   (let [our-fn (->> tsar-fn
                     sanitize-body
                     str)
