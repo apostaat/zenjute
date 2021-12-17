@@ -71,36 +71,14 @@
 (defn recursive-search-by-tag
   [v ctx tags]
   (swap! counter inc)
-  ;; (swap! a assoc (keyword (gensym "tags-")) {:tags tags
-  ;;                                            :step @counter})
   (let [schema (get-zen-symbol ctx (first tags))
         imports (:zj/import-fn schema)]
-    ;; (swap! a assoc (keyword (gensym "imports-")) {:imports imports
-    ;;                                               :schema schema
-    ;;                                               :step @counter})
     (if (not-empty imports)
       ;;tags
       (let [exp-imports
             (mapv (fn [t]
                     (let [import-schema (get-zen-symbol ctx t)]
-                      ;; (swap! a assoc (keyword (gensym "import-schema-")) {:t t
-                      ;;                                                     :schema import-schema
-                      ;;                                                     :step @counter})
-                      (let [res (recursive-search-by-tag v ctx (:zen/tags import-schema))
-                            ;; body-fn (:body res)
-                            ;; _tag_ (first (:tag res))
-                            ;; current-ifn (first (filter #(= _tag_ %) imports))
-                            ;; expanded-imports {current-ifn body-fn}
-                            ;; body (expand expanded-imports (:zj/body import-schema))
-                            ;; body (if-let [_let_ (:zj/let import-schema)]
-                            ;;        {:tag t
-                            ;;         :body (expand _let_ body)}
-                            ;;        {:tag t
-                            ;;         :body body})
-                            ]
-                        #_(vswap! v conj {t (:body body)})
-                        #_body
-
+                      (let [res (recursive-search-by-tag v ctx (:zen/tags import-schema))]
                         res)
 
                       ))
@@ -109,13 +87,8 @@
             _ (swap! counter dec)
             ;;only one import for now
 
-            ;; _ (swap! a assoc (keyword (gensym "vol-")) {:step @counter
-            ;;                                             :vol @v
-            ;;                                             :tag (:zen/tags schema)
-            ;;                                             :body (:zj/body schema)
-            ;;                                             })
             imp (first exp-imports)
-            tag-body #_{(:tag imp) (get @v (:tag imp))} {(first (:tag imp)) (:body imp)}
+            tag-body {(first (:tag imp)) (:body imp)}
 
 
             exp-schema (->> (-> (expand tag-body (dissoc schema :zj/import-fn))
@@ -129,15 +102,13 @@
             ]
 
         (swap! a assoc (keyword (gensym "expanded-")) {:step @counter
-                                                       ;; :exp-imports exp-imports
-                                                         :vol @v
-                                                         :tag (:zen/tags schema)
-                                                       
+                                                       :vol @v
+                                                       :tag (:zen/tags schema)
                                                        :tag-body tag-body
-                                                         :body (:zj/body schema)
+                                                       :body (:zj/body schema)
                                                        :exp-schema exp-schema
-                                                         :exp-body body
-                                                         })
+                                                       :exp-body body
+                                                       })
         {:tag (:zen/tags schema)
          :body (get @v (first (:zen/tags schema)))}
         )
@@ -194,7 +165,7 @@
                            :zj/let {'foo '(fn [x] (merge {:id (two/naive-two x)}
                                                          {:k 5}))}
                            :zj/body '(fn [v] {:foo (foo v)
-                                              #_#_:naive-mapping (one/naive-mapping v)})}})
+                                              :naive-mapping (two/naive-two v)})}})
       _ (zen/load-ns ctx {'ns 'four
                           'naive-four {:zen/tags #{'zen/tag}}
                           'NaiveFour
@@ -204,15 +175,16 @@
                            :zj/body '(fn [v] {:kal (kal v)})}})
       res (fn [v] {:kal {:foo {:id {:key2 {:id (-> v :k :j :l)}}
                                :k 5}
-                         #_#_:naive-mapping {:id (-> v :k :j :l)}}})
+                         :naive-mapping {:id (-> v :k :j :l)}}})
       input {:k {:j {:l "WIN"}}}]
   #_(get-zen-symbol ctx 'mt/naive-three)
   #_(make-tsar-fn ctx (get-zen-symbol ctx 'three/naive-three))
-
   (apply-mapping ctx input (get-in (make-tsar-fn ctx (get-zen-symbol ctx 'four/naive-four))
-                                   [:body])))
+                                   [:body]))
+  )
 
 @a
+
 
 
   ; (TODO)
