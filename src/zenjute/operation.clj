@@ -25,8 +25,23 @@
 (def ctx-test (zen/new-context {:unsafe true}))
 (def input {:way {:over {:there "WIN"}}})
 
+(defn get-entry-point
+  [ctx code]
+  (let [entry-point (->> code
+                         keys
+                         (mapv str)
+                         (filter (fn [x] (-> x
+                                             first
+                                             #{\*})))
+                         first)]
+    (-> code
+        (get 'ns)
+        (str "/" entry-point)
+        symbol
+        (->> (zen/get-symbol ctx)))))
+
 ;;TODO: eval mapping here
-;;TODO custom entry point
+
 ;;TODO zj/path
 ;;NOTE: body is a string of text and it must be evaluated by reader
 (defn eval-mapping [{:keys [body] :as req}]
@@ -39,7 +54,9 @@
             code* (edn/read-string code)
             ztx (zen/new-context {:unsafe true})
             _ (zen/load-ns ztx code*)
-            entry-point (zen/get-symbol ztx (symbol (str (get code* 'ns) "/NaiveFour")))
+            _ (swap! a assoc :ctx ztx)
+            _ (swap! a assoc :code code*)
+            entry-point (get-entry-point ztx code*)
             res (zj/apply-mapping data* (:body (zj/make-tsar-fn ztx entry-point)))]
         {:status 200
          :body res})

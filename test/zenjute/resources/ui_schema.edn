@@ -1,0 +1,37 @@
+{ns t
+ naive-three {:zen/tags #{ zen/tag}}
+ naive-two {:zen/tags #{ zen/tag}}
+ naive-mapping {:zen/tags #{ zen/tag}}
+ naive-four {:zen/tags #{ zen/tag}}
+
+ NaiveMapping
+ {:zen/tags #{naive-mapping}
+  :zj/let { k :way}
+  :zj/body  (fn [v] {:go (-> v k :over :there)})}
+
+  NaiveTwo
+  {:zen/tags #{naive-two}
+   :zj/import-fn #{t/naive-mapping}
+   :zj/body  (fn [v] {:one (t/naive-mapping v)})}
+
+  NaiveThree
+  {:zen/tags #{ naive-three}
+   :zj/import-fn #{t/naive-two}
+   :zj/let { foo  (fn [x] (merge {:two (t/naive-two x)}
+                                 {:stuff "stuff"}))}
+   :zj/body  (fn [v] {:three (foo v)
+                      :one-more-time (t/naive-two v)})}
+ *NaiveFour
+ {:zen/tags #{ naive-four}
+  :zj/import-fn #{t/naive-three}
+  :zj/let { foo  (fn [x] (t/naive-three x))}
+  :zj/body  (fn [v] {:four (foo v)})}}
+
+;; result:
+
+{:four {:three {:two {:one {:go "WIN"}}
+                          :stuff "stuff"}
+        :one-more-time {:one {:go "WIN"}}}}
+
+;; input
+{:way {:over {:there "WIN"}}}
