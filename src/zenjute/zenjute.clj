@@ -188,8 +188,9 @@
   #_(get-zen-symbol ctx 'mt/naive-three)
   #_(make-tsar-fn ctx (get-zen-symbol ctx 'three/naive-three))
   (get-in (make-tsar-fn ctx (get-zen-symbol ctx 'four/naive-four))
-          [:body])
-  )
+          [:body]))
+
+
 
 @a
 

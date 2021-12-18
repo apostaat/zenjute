@@ -9,18 +9,25 @@
 (defn ->string [body]
   (cond-> body (not (string? body)) slurp))
 
+(def a (atom {}))
+
 (defn read-custom [body]
-  (let [[code data] (str/split body #"\$\$\$\,")]
-    {:code code
-     :data data}))
+  (let [[code data] (str/split body #"\,\$\$\$\,")]
+  {:code code
+   :data data}))
 
 (defn read-body [{:keys [body] :as req}]
   (let [cnt (->string body)]
     (if (#{"application/json"} (get-in req [:headers "content-type"]))
-      (json/parse-string cnt true)
-      (read-custom cnt))))
+        (json/parse-string cnt true)
+        (read-custom cnt))))
 
-;;TODO: eval mapping here.
+(def ctx-test (zen/new-context {:unsafe true}))
+(def input {:way {:over {:there "WIN"}}})
+
+;;TODO: eval mapping here
+;;TODO custom entry point
+;;TODO zj/path
 ;;NOTE: body is a string of text and it must be evaluated by reader
 (defn eval-mapping [{:keys [body] :as req}]
   ;;just a plug at the moment
@@ -32,7 +39,8 @@
             code* (edn/read-string code)
             ztx (zen/new-context {:unsafe true})
             _ (zen/load-ns ztx code*)
-            res (zj/apply-mapping data* (:body (zj/make-tsar-fn ztx code*)))]
+            entry-point (zen/get-symbol ztx (symbol (str (get code* 'ns) "/NaiveFour")))
+            res (zj/apply-mapping data* (:body (zj/make-tsar-fn ztx entry-point)))]
         {:status 200
          :body res})
       {:status 400
