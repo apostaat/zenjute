@@ -4,12 +4,17 @@
             [clojure.walk :as w])
   (:gen-class))
 
+(defn check-clojure-core-fns
+  [el]
+  ((->> 'clojure.core
+       ns-publics
+       keys
+       (mapv str)
+       (apply hash-set)) (name el)))
+
 (defn sanitize-body [body]
   (w/postwalk (fn [el] (if (symbol? el)
-                         (if (or (= "fn" (name el))
-                                 (= "->" (name el))
-                                 (= "->>" (name el))
-                                 (= "merge" (name el)))
+                         (if (check-clojure-core-fns el)
                            (symbol (name el))
                            (symbol (str (namespace el)
                                         "-" (name el))))
