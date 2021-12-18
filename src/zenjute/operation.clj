@@ -4,7 +4,8 @@
             [zen.core :as zen]
             [clojure.java.io :as io]
             [clojure.edn   :as edn]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.walk :as w]))
 
 (defn ->string [body]
   (cond-> body (not (string? body)) slurp))
@@ -40,10 +41,24 @@
         symbol
         (->> (zen/get-symbol ctx)))))
 
-;;TODO: eval mapping here
+(defn expand-path
+  [body]
+  (w/postwalk (fn [el]
+                (if (meta el)
+                  (let [s (gensym "fn-")]
+                    `(fn [~s] (get ~s ~el)))
+                  el))
+              body))
 
+#_(expand-path '{:four (fn [x] {:k x})
+         :x {:k {:i {:j ^:path[:k 0 :i]}}}})
+
+
+;;TODO: eval mapping here
+;;TODO DSL look alike zj/body
 ;;TODO zj/path
 ;;NOTE: body is a string of text and it must be evaluated by reader
+
 (defn eval-mapping [{:keys [body] :as req}]
   ;;just a plug at the moment
   (try
